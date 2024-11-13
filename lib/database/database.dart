@@ -205,7 +205,7 @@ class DatabaseHelper {
 
     String sql = '''select q.id, q.type, q.title, a.title as answer, q.isEnd
                     from question q left outer join answer a
-                    on q.id = a.questionId order by q.id ASC''';
+                    on q.id = a.questionId GROUP BY q.id order by q.id ASC''';
 
     List<Map<String, dynamic>> maps = await db.rawQuery(sql);
 
@@ -371,7 +371,6 @@ class DatabaseHelper {
     Database db = await _database;
 
     for (var data in results) {
-      print(data);
       await db.insert(
         'survey_result',
         {

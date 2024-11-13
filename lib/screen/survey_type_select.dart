@@ -54,7 +54,11 @@ class _SurveyTypeSelectScreenState extends State<SurveyTypeSelectScreen> {
   void _onNextTap() async {
     final isEnd = await _nextQuestionIsEnd(widget.questionId);
 
-    saveStorage(widget.questionId.toString(), answerIds.join(','));
+    final isStorage = await _getStorage(widget.questionId.toString());
+    print('------------$isStorage');
+    if (isStorage == '') {
+      saveStorage(widget.questionId.toString(), answerIds.join(','));
+    }
 
     if (isEnd == 0) {
       final nextQuestionPage = widget.questionId + 1;
@@ -103,8 +107,7 @@ class _SurveyTypeSelectScreenState extends State<SurveyTypeSelectScreen> {
       }
       db.insertSurvey(1, results);
 
-      SharedPreferences storage = await SharedPreferences.getInstance();
-      storage.remove('survey');
+      removeStorage('survey');
 
       if (mounted) {
         Navigator.of(context).push(
@@ -218,9 +221,15 @@ class _SurveyTypeSelectScreenState extends State<SurveyTypeSelectScreen> {
                                         onChanged: (bool? value) {
                                           setState(() {
                                             isChecked = value!;
-                                          });
 
-                                          answerIds.add(data.answerId!);
+                                            if (isChecked) {
+                                              answerIds.add(data.answerId!);
+                                            } else {
+                                              answerIds.remove(data.answerId!);
+                                            }
+
+                                            print(answerIds);
+                                          });
                                         },
                                         activeColor: const Color(0xffff5c35),
                                         side: BorderSide(
