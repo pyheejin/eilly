@@ -76,7 +76,7 @@ class _StoreScreenState extends State<StoreScreen> {
                           List<CategoryModel> categoryList =
                               snapshot.data as List<CategoryModel>;
                           return SizedBox(
-                            height: 100,
+                            height: 200,
                             child: GridView.builder(
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(

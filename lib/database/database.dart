@@ -1,4 +1,5 @@
 import 'package:eilly/database/models.dart';
+import 'package:eilly/widget/storage.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -366,20 +367,87 @@ class DatabaseHelper {
     }
   }
 
-  Future<void> insertSurvey(
+  Future<List<SurveyModel>> getSurveyList(int userId) async {
+    Database db = await _database;
+
+    String sql =
+        '''select s.id, p.name, p.price, s.userId, s.productId, p.description, p.imageUrl
+                    from survey s inner join product p on s.productId = p.id
+                    where s.userId = 1''';
+
+    List<Map<String, dynamic>> maps = await db.rawQuery(sql);
+
+    return List<SurveyModel>.from(
+      maps.map((map) => SurveyModel.fromJson(map)),
+    );
+  }
+
+  Future<void> insertSurvey(int userId) async {
+    Database db = await _database;
+
+    String sql = '''INSERT INTO survey (userId)
+                    VALUES ($userId) RETURNING id''';
+    List<Map<String, dynamic>> maps = await db.rawQuery(sql);
+
+    final surveyId = maps.first['id'];
+    saveStorage('surveyId', surveyId.toString());
+  }
+
+  Future<void> insertSurveyResult(
       int surveyId, List<Map<String, dynamic>> results) async {
     Database db = await _database;
 
     for (var data in results) {
-      await db.insert(
-        'survey_result',
-        {
-          'surveyId': surveyId,
-          'questionId': data['questionId'],
-          'answerId': data['answerId'],
-          'description': data['description'],
-        },
-      );
+      if (data['answerId'] != null) {
+        for (var answerId in data['answerId'].split(',')) {
+          await db.insert(
+            'survey_result',
+            {
+              'surveyId': surveyId,
+              'questionId': data['questionId'],
+              'answerId': answerId,
+              'description': data['description'],
+            },
+          );
+        }
+      } else {
+        await db.insert(
+          'survey_result',
+          {
+            'surveyId': surveyId,
+            'questionId': data['questionId'],
+            'answerId': data['answerId'],
+            'description': data['description'],
+          },
+        );
+      }
     }
+
+    // 추천 상품 저장
+    String sql = '''SELECT a.categoryId, COUNT(a.categoryId) as count
+                    FROM survey_result r
+                    INNER JOIN survey s ON r.surveyId = s.id
+                    INNER JOIN answer a ON a.id = r.answerId
+                    WHERE s.id = 1
+                    GROUP BY a.categoryId
+                    ORDER BY count desc;''';
+    List<Map<String, dynamic>> maps = await db.rawQuery(sql);
+
+    final categoryId = maps.first['categoryId'];
+
+    String productSql =
+        '''SELECT * FROM product WHERE categoryId = $categoryId''';
+    List<Map<String, dynamic>> productMaps = await db.rawQuery(productSql);
+
+    final productId = productMaps.first['id'];
+
+    await db.update(
+      'survey',
+      {
+        'productId': productId,
+      },
+      where: 'id = ?',
+      whereArgs: [surveyId],
+    );
   }
 }

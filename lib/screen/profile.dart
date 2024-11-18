@@ -1,5 +1,6 @@
 import 'package:eilly/database/database.dart';
 import 'package:eilly/database/models.dart';
+import 'package:eilly/screen/store_detail.dart';
 import 'package:eilly/widget/persistent_tabbar.dart';
 import 'package:flutter/material.dart';
 
@@ -14,6 +15,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final DatabaseHelper db = DatabaseHelper();
 
   late Future<UserModel> user;
+  late Future<List<SurveyModel>> surveys;
 
   final int userId = 1;
 
@@ -28,6 +30,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     db.initDb();
     user = db.getUserDetail(userId);
+    surveys = db.getSurveyList(userId);
 
     _nicknameController.addListener(() {
       setState(() {
@@ -179,7 +182,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           body: TabBarView(
             children: [
               ListView.builder(
-                itemCount: 10,
+                itemCount: 2,
                 itemBuilder: (context, index) {
                   return ListTile(
                     title: Text('item $index'),
@@ -189,15 +192,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                 },
               ),
-              ListView.builder(
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text('result $index'),
-                    trailing: const Icon(Icons.arrow_forward),
-                    selected: index < 1,
-                    onTap: () {},
-                  );
+              FutureBuilder(
+                future: surveys,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else {
+                    List<SurveyModel> surveyList =
+                        snapshot.data as List<SurveyModel>;
+                    return ListView.builder(
+                      itemCount: surveyList.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 5,
+                          ),
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => StoreDetailScreen(
+                                      productId: surveyList[index].productId),
+                                ),
+                              );
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 100,
+                                      height: 100,
+                                      color: const Color(0xffF2F2F2),
+                                      child: Image.network(
+                                          surveyList[index].imageUrl),
+                                    ),
+                                    const SizedBox(width: 20),
+                                    Text(
+                                      surveyList[index].name,
+                                      style: const TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Icon(Icons.arrow_forward),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }
                 },
               ),
             ],

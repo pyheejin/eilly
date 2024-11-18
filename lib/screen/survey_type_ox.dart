@@ -1,6 +1,5 @@
 import 'package:eilly/database/database.dart';
 import 'package:eilly/database/models.dart';
-import 'package:eilly/screen/main_tab_screen.dart';
 import 'package:eilly/screen/survey_result.dart';
 import 'package:eilly/screen/survey_type_select.dart';
 import 'package:eilly/screen/survey_type_text.dart';
@@ -45,6 +44,11 @@ class _SurveyTypeOXScreenState extends State<SurveyTypeOXScreen> {
     return q.first.isEnd;
   }
 
+  Future<String> _getStorage(String id) async {
+    final result = await getStorage(id);
+    return result;
+  }
+
   void _onNextTap() async {
     final isEnd = await _nextQuestionIsEnd(widget.questionId);
 
@@ -83,17 +87,31 @@ class _SurveyTypeOXScreenState extends State<SurveyTypeOXScreen> {
         }
       }
     } else {
+      final questionList = await db.getQuestions();
+      final List<Map<String, dynamic>> results = [];
+      for (var q in questionList) {
+        // 10(text), 20(select), 30(o/x)
+        results.add({
+          'questionId': q.id.toString(),
+          'questionType': q.type,
+          'answerId':
+              q.type == '20' ? await _getStorage(q.id.toString()) : null,
+          'description':
+              q.type != '20' ? await _getStorage(q.id.toString()) : '',
+        });
+      }
+      final surveyId = await _getStorage('surveyId');
+      db.insertSurveyResult(int.parse(surveyId), results);
+
+      removeStorage('survey');
+      removeStorage('surveyId');
+
       if (mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => const SurveyResultScreen(),
           ),
         );
-
-        final questionList = await db.getQuestions();
-        for (var q in questionList) {
-          getStorage(q.id.toString());
-        }
       }
     }
   }

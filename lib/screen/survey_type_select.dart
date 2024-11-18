@@ -7,7 +7,6 @@ import 'package:eilly/screen/survey_type_text.dart';
 import 'package:eilly/widget/storage.dart';
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SurveyTypeSelectScreen extends StatefulWidget {
   final int questionId;
@@ -54,11 +53,7 @@ class _SurveyTypeSelectScreenState extends State<SurveyTypeSelectScreen> {
   void _onNextTap() async {
     final isEnd = await _nextQuestionIsEnd(widget.questionId);
 
-    final isStorage = await _getStorage(widget.questionId.toString());
-    print('------------$isStorage');
-    if (isStorage == '') {
-      saveStorage(widget.questionId.toString(), answerIds.join(','));
-    }
+    saveStorage(widget.questionId.toString(), answerIds.join(','));
 
     if (isEnd == 0) {
       final nextQuestionPage = widget.questionId + 1;
@@ -96,18 +91,21 @@ class _SurveyTypeSelectScreenState extends State<SurveyTypeSelectScreen> {
       final questionList = await db.getQuestions();
       final List<Map<String, dynamic>> results = [];
       for (var q in questionList) {
+        // 10(text), 20(select), 30(o/x)
         results.add({
           'questionId': q.id.toString(),
           'questionType': q.type,
           'answerId':
-              q.type != '10' ? await _getStorage(q.id.toString()) : null,
+              q.type == '20' ? await _getStorage(q.id.toString()) : null,
           'description':
-              q.type == '10' ? await _getStorage(q.id.toString()) : '',
+              q.type != '20' ? await _getStorage(q.id.toString()) : '',
         });
       }
-      db.insertSurvey(1, results);
+      final surveyId = await _getStorage('surveyId');
+      db.insertSurveyResult(int.parse(surveyId), results);
 
       removeStorage('survey');
+      removeStorage('surveyId');
 
       if (mounted) {
         Navigator.of(context).push(

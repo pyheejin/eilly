@@ -59,6 +59,11 @@ class _SurveyTypeTextScreenState extends State<SurveyTypeTextScreen> {
     return q.first.isEnd;
   }
 
+  Future<String> _getStorage(String id) async {
+    final result = await getStorage(id);
+    return result;
+  }
+
   void _onNextTap() async {
     final isEnd = await _nextQuestionIsEnd(widget.questionId);
 
@@ -97,6 +102,25 @@ class _SurveyTypeTextScreenState extends State<SurveyTypeTextScreen> {
         }
       }
     } else {
+      final questionList = await db.getQuestions();
+      final List<Map<String, dynamic>> results = [];
+      for (var q in questionList) {
+        // 10(text), 20(select), 30(o/x)
+        results.add({
+          'questionId': q.id.toString(),
+          'questionType': q.type,
+          'answerId':
+              q.type == '20' ? await _getStorage(q.id.toString()) : null,
+          'description':
+              q.type != '20' ? await _getStorage(q.id.toString()) : '',
+        });
+      }
+      final surveyId = await _getStorage('surveyId');
+      db.insertSurveyResult(int.parse(surveyId), results);
+
+      removeStorage('survey');
+      removeStorage('surveyId');
+
       if (mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(

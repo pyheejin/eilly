@@ -1,54 +1,35 @@
-import 'package:eilly/database/database.dart';
-import 'package:eilly/database/models.dart';
+import 'package:eilly/provider/cart_provider.dart';
+import 'package:eilly/provider/main_tap_provider.dart';
 import 'package:eilly/screen/cart.dart';
 import 'package:eilly/screen/home.dart';
 import 'package:eilly/screen/profile.dart';
 import 'package:eilly/screen/store.dart';
+import 'package:eilly/screen/store2.dart';
 import 'package:eilly/widget/nav_tab.dart';
-import 'package:eilly/widget/storage.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MainTabScreen extends StatefulWidget {
+class MainTabScreen extends ConsumerWidget {
   const MainTabScreen({super.key});
 
   @override
-  State<MainTabScreen> createState() => _MainTabScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cartCount = ref.watch(cartCountProvider).value;
 
-class _MainTabScreenState extends State<MainTabScreen> {
-  final DatabaseHelper db = DatabaseHelper();
+    int selectedIndex = ref.watch(mainTapProvider);
 
-  late Future<List<CartModel>> carts;
-  late Future<int> cartLength;
+    void onTap(int index) {
+      ref.read(mainTapProvider.notifier).update((state) => index);
+    }
 
-  int _selectedIndex = 2;
+    void onCartTap() {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const CartScreen(),
+        ),
+      );
+    }
 
-  @override
-  void initState() {
-    super.initState();
-
-    db.initDb();
-    carts = db.getCarts(1);
-    cartLength = db.getCartCount(1);
-  }
-
-  void _onTap(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  void _onCartTap() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => const CartScreen(),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50),
@@ -57,7 +38,7 @@ class _MainTabScreenState extends State<MainTabScreen> {
             Stack(
               children: [
                 GestureDetector(
-                  onTap: _onCartTap,
+                  onTap: onCartTap,
                   child: const SizedBox(
                     width: 50,
                     height: 50,
@@ -79,28 +60,15 @@ class _MainTabScreenState extends State<MainTabScreen> {
                       color: Colors.red,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: FutureBuilder(
-                      future: cartLength,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const CircularProgressIndicator();
-                        } else if (snapshot.hasError) {
-                          return Text('Error: ${snapshot.error}');
-                        } else {
-                          int cartLength = snapshot.data!;
-                          return Center(
-                            child: Text(
-                              cartLength.toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        }
-                      },
+                    child: Center(
+                      child: Text(
+                        cartCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -125,15 +93,15 @@ class _MainTabScreenState extends State<MainTabScreen> {
         child: Stack(
           children: [
             Offstage(
-              offstage: _selectedIndex != 0,
+              offstage: selectedIndex != 0,
               child: const HomeScreen(),
             ),
             Offstage(
-              offstage: _selectedIndex != 1,
-              child: const StoreScreen(),
+              offstage: selectedIndex != 1,
+              child: const StoreScreen2(),
             ),
             Offstage(
-              offstage: _selectedIndex != 2,
+              offstage: selectedIndex != 2,
               child: const ProfileScreen(),
             ),
           ],
@@ -147,27 +115,27 @@ class _MainTabScreenState extends State<MainTabScreen> {
           children: [
             NavTab(
               text: '홈',
-              isSelected: _selectedIndex == 0,
+              isSelected: selectedIndex == 0,
               icon: Icons.house,
               selectedIcon: Icons.house,
-              onTap: () => _onTap(0),
-              selectedIndex: _selectedIndex,
+              onTap: () => onTap(0),
+              selectedIndex: selectedIndex,
             ),
             NavTab(
               text: '스토어',
-              isSelected: _selectedIndex == 1,
+              isSelected: selectedIndex == 1,
               icon: Icons.store,
               selectedIcon: Icons.store,
-              onTap: () => _onTap(1),
-              selectedIndex: _selectedIndex,
+              onTap: () => onTap(1),
+              selectedIndex: selectedIndex,
             ),
             NavTab(
               text: '마이페이지',
-              isSelected: _selectedIndex == 2,
+              isSelected: selectedIndex == 2,
               icon: Icons.person,
               selectedIcon: Icons.person,
-              onTap: () => _onTap(2),
-              selectedIndex: _selectedIndex,
+              onTap: () => onTap(2),
+              selectedIndex: selectedIndex,
             ),
           ],
         ),

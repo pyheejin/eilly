@@ -1,3 +1,4 @@
+import 'package:eilly/database/database.dart';
 import 'package:eilly/screen/survey.dart';
 import 'package:flutter/material.dart';
 
@@ -9,12 +10,23 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final DatabaseHelper db = DatabaseHelper();
+
+  @override
+  void initState() {
+    super.initState();
+
+    db.initDb();
+  }
+
   void _onSurveyTap() async {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const SurveyScreen(questionId: 1),
       ),
     );
+
+    await db.insertSurvey(1);
   }
 
   @override

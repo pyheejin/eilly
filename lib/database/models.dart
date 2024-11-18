@@ -206,3 +206,50 @@ class CartModel {
     );
   }
 }
+
+class SurveyModel {
+  int? id;
+  int userId;
+  int productId;
+  String name;
+  int price;
+  String imageUrl;
+  String description;
+
+  // 생성자
+  SurveyModel({
+    this.id,
+    required this.userId,
+    required this.productId,
+    required this.name,
+    required this.price,
+    required this.imageUrl,
+    required this.description,
+  });
+
+  // Map으로 변환하는 메서드
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'userId': userId,
+      'productId': productId,
+      'name': name,
+      'price': price,
+      'imageUrl': imageUrl,
+      'description': description,
+    };
+  }
+
+  // JSON 데이터를 Model객체로 변환하는 팩토리 생성자
+  factory SurveyModel.fromJson(Map<String, dynamic> json) {
+    return SurveyModel(
+      id: json['id'],
+      userId: json['userId'],
+      productId: json['productId'],
+      name: json['name'],
+      price: json['price'],
+      imageUrl: json['imageUrl'],
+      description: json['description'],
+    );
+  }
+}
