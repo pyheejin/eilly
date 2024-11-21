@@ -75,6 +75,10 @@ class OrderScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(20),
         child: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) {
+            int height = 70;
+            if (products.value != null) {
+              height = products.value!.length * 70;
+            }
             return [
               SliverToBoxAdapter(
                 child: Column(
@@ -92,7 +96,7 @@ class OrderScreen extends ConsumerWidget {
                         vertical: 10,
                       ),
                       child: SizedBox(
-                        height: products.value!.length * 70,
+                        height: height.toDouble(),
                         child: products.when(
                           loading: () => const CircularProgressIndicator(),
                           error: (error, stack) => Text('상품 목록 에러: $error'),

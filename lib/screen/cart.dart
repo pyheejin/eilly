@@ -75,173 +75,10 @@ class CartScreen extends ConsumerWidget {
           ),
           child: Column(
             children: [
-              Expanded(
-                child: products.when(
-                  loading: () => const CircularProgressIndicator(),
-                  error: (error, stack) => Text('카테고리 에러: $error'),
-                  data: (productList) => ListView.builder(
-                    itemCount: productList.length,
-                    itemBuilder: (context, index) {
-                      int price = productList[index].price != null
-                          ? productList[index].price! *
-                              productList[index].quantity
-                          : 0;
-                      return StatefulBuilder(
-                        builder: (BuildContext context, StateSetter setState) {
-                          return Column(
-                            children: [
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 2),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: Colors.grey.withOpacity(0.3),
-                                      ),
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 20,
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Row(
-                                              children: [
-                                                Container(
-                                                  width: 55,
-                                                  height: 55,
-                                                  color:
-                                                      const Color(0xffF2F2F2),
-                                                  child: Image.network(
-                                                      productList[index]
-                                                          .imageUrl!),
-                                                ),
-                                                const SizedBox(width: 20),
-                                                Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    const SizedBox(height: 2),
-                                                    Text(
-                                                      productList[index].name!,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                    ),
-                                                    const SizedBox(height: 5),
-                                                    Container(
-                                                      decoration: BoxDecoration(
-                                                        border: Border.all(
-                                                          color: Colors.grey
-                                                              .withOpacity(0.3),
-                                                        ),
-                                                      ),
-                                                      child: Row(
-                                                        children: [
-                                                          GestureDetector(
-                                                            onTap: () {
-                                                              ref
-                                                                  .read(cartProductCountProvider
-                                                                      .notifier)
-                                                                  .decrement(
-                                                                    1,
-                                                                    productList[
-                                                                            index]
-                                                                        .productId,
-                                                                  );
-                                                            },
-                                                            child: const Icon(
-                                                                Icons.remove),
-                                                          ),
-                                                          const SizedBox(
-                                                              width: 5),
-                                                          Text(
-                                                              productList[index]
-                                                                  .quantity
-                                                                  .toString()),
-                                                          const SizedBox(
-                                                              width: 5),
-                                                          GestureDetector(
-                                                            onTap: () {
-                                                              ref
-                                                                  .read(cartProductCountProvider
-                                                                      .notifier)
-                                                                  .increment(
-                                                                    1,
-                                                                    productList[
-                                                                            index]
-                                                                        .productId,
-                                                                  );
-                                                            },
-                                                            child: const Icon(
-                                                                Icons.add),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    )
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 10,
-                                              ),
-                                              child: Row(
-                                                children: [
-                                                  Text(
-                                                    '${numberFormat.format(price)}원',
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 15,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 10),
-                                                  GestureDetector(
-                                                    onTap: () {
-                                                      ref
-                                                          .read(
-                                                              cartProductCountProvider
-                                                                  .notifier)
-                                                          .delete(
-                                                            1,
-                                                            productList[index]
-                                                                .productId,
-                                                          );
-                                                    },
-                                                    child: const Text(
-                                                      '삭제',
-                                                      style: TextStyle(
-                                                        color: Colors.red,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
+              ProductList(
+                products: products,
+                numberFormat: numberFormat,
+                ref: ref,
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10),
@@ -295,5 +132,175 @@ class CartScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+class ProductList extends StatelessWidget {
+  const ProductList({
+    super.key,
+    required this.products,
+    required this.numberFormat,
+    required this.ref,
+  });
+
+  final AsyncValue<List<CartModel>> products;
+  final NumberFormat numberFormat;
+  final WidgetRef ref;
+
+  @override
+  Widget build(BuildContext context) {
+    try {
+      return Expanded(
+        child: products.when(
+          loading: () => const CircularProgressIndicator(),
+          error: (error, stack) => Text('카테고리 에러: $error'),
+          data: (productList) => ListView.builder(
+            itemCount: productList.length,
+            itemBuilder: (context, index) {
+              int price = 0;
+              if (productList[index].price != null) {
+                price = productList[index].price! * productList[index].quantity;
+              }
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.grey.withOpacity(0.3),
+                          ),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 20,
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 55,
+                                      height: 55,
+                                      color: const Color(0xffF2F2F2),
+                                      child: Image.network(
+                                          productList[index].imageUrl!),
+                                    ),
+                                    const SizedBox(width: 20),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          productList[index].name!,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color:
+                                                  Colors.grey.withOpacity(0.3),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () {
+                                                  ref
+                                                      .read(
+                                                          cartProductCountProvider
+                                                              .notifier)
+                                                      .decrement(
+                                                        1,
+                                                        productList[index]
+                                                            .productId,
+                                                      );
+                                                },
+                                                child: const Icon(Icons.remove),
+                                              ),
+                                              const SizedBox(width: 5),
+                                              Text(productList[index]
+                                                  .quantity
+                                                  .toString()),
+                                              const SizedBox(width: 5),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  ref
+                                                      .read(
+                                                          cartProductCountProvider
+                                                              .notifier)
+                                                      .increment(
+                                                        1,
+                                                        productList[index]
+                                                            .productId,
+                                                      );
+                                                },
+                                                child: const Icon(Icons.add),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        '${numberFormat.format(price)}원',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      GestureDetector(
+                                        onTap: () {
+                                          ref
+                                              .read(cartProductCountProvider
+                                                  .notifier)
+                                              .delete(
+                                                1,
+                                                productList[index].productId,
+                                              );
+                                        },
+                                        child: const Text(
+                                          '삭제',
+                                          style: TextStyle(
+                                            color: Colors.red,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      );
+    } finally {
+      const Text('no data');
+    }
   }
 }
