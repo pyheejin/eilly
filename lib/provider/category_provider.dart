@@ -9,3 +9,14 @@ final categoryProvider = FutureProvider<List<CategoryModel>>((ref) async {
   final result = await db.getCategories();
   return result;
 });
+
+final categoryDetailProvider =
+    FutureProvider.family<CategoryModel, int>((ref, categoryId) async {
+  final DatabaseHelper db = DatabaseHelper();
+  db.initDb();
+
+  final result = await db.getCategoryDetail(categoryId);
+  return result;
+});
+
+final categoryTapProvider = StateProvider<int>((ref) => 1);

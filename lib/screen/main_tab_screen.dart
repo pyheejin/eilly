@@ -4,7 +4,6 @@ import 'package:eilly/screen/cart.dart';
 import 'package:eilly/screen/home.dart';
 import 'package:eilly/screen/profile.dart';
 import 'package:eilly/screen/store.dart';
-import 'package:eilly/screen/store2.dart';
 import 'package:eilly/widget/nav_tab.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -98,7 +97,7 @@ class MainTabScreen extends ConsumerWidget {
             ),
             Offstage(
               offstage: selectedIndex != 1,
-              child: const StoreScreen2(),
+              child: const StoreScreen(),
             ),
             Offstage(
               offstage: selectedIndex != 2,

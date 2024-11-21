@@ -128,6 +128,37 @@ class DatabaseHelper {
         )
       ''',
     );
+
+    // 주문 테이블 생성
+    db.execute(
+      '''
+      CREATE TABLE IF NOT EXISTS order
+        (
+          id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+          paymentId INTEGER,
+          productId INTEGER,
+          quantity INTEGER,
+          price INTEGER
+        )
+      ''',
+    );
+
+    // 구매내역 테이블 생성
+    db.execute(
+      '''
+      CREATE TABLE IF NOT EXISTS payment
+        (
+          id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+          userId INTEGER,
+          name TEXT,
+          phone INTEGER,
+          address TEXT,
+          addressDetail TEXT,
+          deliveryMessage TEXT,
+          price INTEGER
+        )
+      ''',
+    );
   }
 
   Future<List<CategoryModel>> getCategories() async {
@@ -146,7 +177,7 @@ class DatabaseHelper {
     );
   }
 
-  Future<CategoryModel?> getCategoryDetail(int categoryId) async {
+  Future<CategoryModel> getCategoryDetail(int categoryId) async {
     Database db = await _database;
     List<Map<String, dynamic>> maps = await db.query(
       'category',
@@ -159,10 +190,7 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [categoryId],
     );
-    if (maps.isNotEmpty) {
-      return CategoryModel.fromJson(maps.first);
-    }
-    return null;
+    return CategoryModel.fromJson(maps.first);
   }
 
   Future<List<ProductModel>> getProducts(int categoryId) async {
@@ -181,6 +209,22 @@ class DatabaseHelper {
     return List<ProductModel>.from(
       maps.map((map) => ProductModel.fromJson(map)),
     );
+  }
+
+  Future<int> getProductCount(int categoryId) async {
+    Database db = await _database;
+
+    String categoryFilter =
+        'select COUNT(*) as count from product where categoryId >= $categoryId order by id desc;';
+
+    if (categoryId > 1) {
+      categoryFilter =
+          'select COUNT(*) as count from product where categoryId = $categoryId order by id desc;';
+    }
+
+    List<Map<String, dynamic>> maps = await db.rawQuery(categoryFilter);
+
+    return maps.first['count'];
   }
 
   Future<ProductModel> getProductDetail(int productId) async {
@@ -263,7 +307,7 @@ class DatabaseHelper {
     Database db = await _database;
 
     String sql = '''select c.id, p.name, p.price, p.imageUrl, c.quantity, 
-                    c.userId, c.productId, SUM(p.price) over() as sumPrice
+                    c.userId, c.productId, SUM(p.price*c.quantity) over() as sumPrice
                     from cart c inner join product p
                     on c.productId = p.id
                     where c.userId = $userId''';
@@ -322,6 +366,16 @@ class DatabaseHelper {
       'cart',
       where: 'userId = ? and productId = ?',
       whereArgs: [userId, productId],
+    );
+  }
+
+  Future<void> deleteCartAll(int userId) async {
+    Database db = await _database;
+
+    await db.delete(
+      'cart',
+      where: 'userId = ?',
+      whereArgs: [userId],
     );
   }
 
@@ -393,7 +447,7 @@ class DatabaseHelper {
     saveStorage('surveyId', surveyId.toString());
   }
 
-  Future<void> insertSurveyResult(
+  Future<int> insertSurveyResult(
       int surveyId, List<Map<String, dynamic>> results) async {
     Database db = await _database;
 
@@ -448,6 +502,39 @@ class DatabaseHelper {
       },
       where: 'id = ?',
       whereArgs: [surveyId],
+    );
+    return productId;
+  }
+
+  // 주문
+  Future<void> insertOrder(
+      List<OrderModel> orders, PaymentModel payment) async {
+    Database db = await _database;
+
+    String sql =
+        '''INSERT INTO payment (userId, name, phone, address, addressDetail, deliveryMessage, price)
+            VALUES (${payment.userId}, '${payment.name}', ${payment.phone}, '${payment.address}', '${payment.addressDetail}', '${payment.deliveryMessage}', ${payment.price}) RETURNING id''';
+    List<Map<String, dynamic>> maps = await db.rawQuery(sql);
+
+    final paymentId = maps.first['id'];
+
+    for (var order in orders) {
+      await db.insert(
+        'order',
+        {
+          'paymentId': paymentId,
+          'productId': order.productId,
+          'quantity': order.quantity,
+          'price': order.price,
+        },
+      );
+    }
+
+    // 완료 후 장바구니 상품 삭제
+    await db.delete(
+      'cart',
+      where: 'userId = ?',
+      whereArgs: [payment.userId],
     );
   }
 }

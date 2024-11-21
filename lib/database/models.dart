@@ -253,3 +253,93 @@ class SurveyModel {
     );
   }
 }
+
+class OrderModel {
+  int? id;
+  int? paymentId;
+  int productId;
+  int quantity;
+  int price;
+
+  // 생성자
+  OrderModel({
+    this.id,
+    this.paymentId,
+    required this.productId,
+    required this.quantity,
+    required this.price,
+  });
+
+  // Map으로 변환하는 메서드
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'paymentId': paymentId,
+      'productId': productId,
+      'quantity': quantity,
+      'price': price,
+    };
+  }
+
+  // JSON 데이터를 Model객체로 변환하는 팩토리 생성자
+  factory OrderModel.fromJson(Map<String, dynamic> json) {
+    return OrderModel(
+      id: json['id'],
+      paymentId: json['paymentId'],
+      productId: json['productId'],
+      quantity: json['quantity'],
+      price: json['price'],
+    );
+  }
+}
+
+class PaymentModel {
+  int? id;
+  int userId;
+  String name;
+  String phone;
+  String address;
+  String addressDetail;
+  String deliveryMessage;
+  int price;
+
+  // 생성자
+  PaymentModel({
+    this.id,
+    required this.userId,
+    required this.name,
+    required this.phone,
+    required this.address,
+    required this.addressDetail,
+    required this.deliveryMessage,
+    required this.price,
+  });
+
+  // Map으로 변환하는 메서드
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'userId': userId,
+      'name': name,
+      'phone': phone,
+      'address': address,
+      'addressDetail': addressDetail,
+      'deliveryMessage': deliveryMessage,
+      'price': price,
+    };
+  }
+
+  // JSON 데이터를 Model객체로 변환하는 팩토리 생성자
+  factory PaymentModel.fromJson(Map<String, dynamic> json) {
+    return PaymentModel(
+      id: json['id'],
+      userId: json['userId'],
+      name: json['name'],
+      phone: json['phone'],
+      address: json['address'],
+      addressDetail: json['addressDetail'],
+      deliveryMessage: json['deliveryMessage'],
+      price: json['price'],
+    );
+  }
+}

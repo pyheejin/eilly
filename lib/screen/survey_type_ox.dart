@@ -101,7 +101,8 @@ class _SurveyTypeOXScreenState extends State<SurveyTypeOXScreen> {
         });
       }
       final surveyId = await _getStorage('surveyId');
-      db.insertSurveyResult(int.parse(surveyId), results);
+      final productId =
+          await db.insertSurveyResult(int.parse(surveyId), results);
 
       removeStorage('survey');
       removeStorage('surveyId');
@@ -109,7 +110,7 @@ class _SurveyTypeOXScreenState extends State<SurveyTypeOXScreen> {
       if (mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => const SurveyResultScreen(),
+            builder: (context) => SurveyResultScreen(productId: productId),
           ),
         );
       }

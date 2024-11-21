@@ -28,3 +28,49 @@ class CartNotifier extends StateNotifier<List<CartModel>> {
 final cartProvider = StateNotifierProvider<CartNotifier, List<CartModel>>(
   (ref) => CartNotifier(),
 );
+
+// 장바구니 수량 증감
+class CartProductCountNotifier extends StateNotifier<int> {
+  CartProductCountNotifier(this.ref) : super(0);
+
+  final Ref ref;
+  final DatabaseHelper db = DatabaseHelper();
+
+  void increment(int userId, int productId) async {
+    db.initDb();
+    await db.increaseCartItem(userId, productId);
+  }
+
+  void decrement(int userId, int productId) async {
+    db.initDb();
+    await db.decreaseCartItem(userId, productId);
+  }
+
+  void delete(int userId, int productId) async {
+    db.initDb();
+    await db.deleteCart(userId, productId);
+  }
+
+  void deleteAll(int userId) async {
+    db.initDb();
+    await db.deleteCartAll(userId);
+  }
+}
+
+final cartProductCountProvider =
+    StateNotifierProvider<CartProductCountNotifier, int>(
+  (ref) => CartProductCountNotifier(ref),
+);
+
+final cartProductProvider =
+    StreamProvider.family<List<CartModel>, int>((ref, userId) async* {
+  final DatabaseHelper db = DatabaseHelper();
+  db.initDb();
+
+  // 1초 간격으로 데이터베이스에서 장바구니 개수를 확인
+  while (true) {
+    final result = await db.getCarts(userId);
+    yield result;
+    await Future.delayed(const Duration(seconds: 1));
+  }
+});

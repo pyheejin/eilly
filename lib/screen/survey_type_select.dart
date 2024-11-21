@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:eilly/database/database.dart';
 import 'package:eilly/database/models.dart';
 import 'package:eilly/screen/main_tab_screen.dart';
+import 'package:eilly/screen/survey_result.dart';
 import 'package:eilly/screen/survey_type_ox.dart';
 import 'package:eilly/screen/survey_type_text.dart';
 import 'package:eilly/widget/storage.dart';
@@ -102,7 +103,8 @@ class _SurveyTypeSelectScreenState extends State<SurveyTypeSelectScreen> {
         });
       }
       final surveyId = await _getStorage('surveyId');
-      db.insertSurveyResult(int.parse(surveyId), results);
+      final productId =
+          await db.insertSurveyResult(int.parse(surveyId), results);
 
       removeStorage('survey');
       removeStorage('surveyId');
@@ -110,7 +112,7 @@ class _SurveyTypeSelectScreenState extends State<SurveyTypeSelectScreen> {
       if (mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => const MainTabScreen(),
+            builder: (context) => SurveyResultScreen(productId: productId),
           ),
         );
       }
