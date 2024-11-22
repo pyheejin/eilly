@@ -20,6 +20,15 @@ class StoreScreen extends ConsumerWidget {
     final products = ref.watch(productProvider(categoryId));
     final productCount = ref.watch(productCountProvider(categoryId)).value;
 
+    int length = 100;
+    if (categories.value != null) {
+      if (categories.value!.length <= 4) {
+        length = 100;
+      } else {
+        length = 200;
+      }
+    }
+
     void onCategoryTap(int id) {
       ref.read(categoryTapProvider.notifier).update((state) => id);
     }
@@ -54,7 +63,7 @@ class StoreScreen extends ConsumerWidget {
                         vertical: 10,
                       ),
                       child: SizedBox(
-                        height: 200,
+                        height: length.toDouble(),
                         child: categories.when(
                           data: (categoryList) => GridView.builder(
                             gridDelegate:

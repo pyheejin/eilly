@@ -1,5 +1,6 @@
 import 'package:eilly/database/models.dart';
 import 'package:eilly/provider/cart_provider.dart';
+import 'package:eilly/screen/home.dart';
 import 'package:eilly/screen/order.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -149,10 +150,73 @@ class ProductList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    void onHomeTap() {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => const HomeScreen(),
+        ),
+      );
+    }
+
     try {
       return Expanded(
         child: products.when(
-          loading: () => const CircularProgressIndicator(),
+          loading: () {
+            return Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 100,
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    '장바구니에 담겨있는 제품이 없어요.',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    '영양추천을 통해',
+                    style: TextStyle(
+                      fontSize: 16,
+                    ),
+                  ),
+                  const Text(
+                    '나에게 필요한 영양성분을 알아보세요:)',
+                    style: TextStyle(
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xffff5c35),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                        side: const BorderSide(color: Colors.red),
+                      ),
+                    ),
+                    onPressed: onHomeTap,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(
+                        vertical: 5,
+                        horizontal: 20,
+                      ),
+                      child: Text(
+                        '영양추천 받으러 가기',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
           error: (error, stack) => Text('카테고리 에러: $error'),
           data: (productList) => ListView.builder(
             itemCount: productList.length,

@@ -132,7 +132,7 @@ class DatabaseHelper {
     // 주문 테이블 생성
     db.execute(
       '''
-      CREATE TABLE IF NOT EXISTS order
+      CREATE TABLE IF NOT EXISTS 'order'
         (
           id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
           paymentId INTEGER,
@@ -257,6 +257,15 @@ class DatabaseHelper {
     return List<QuestionModel>.from(
       maps.map((map) => QuestionModel.fromJson(map)),
     );
+  }
+
+  Future<int> getQuestionCount() async {
+    Database db = await _database;
+
+    String sql = '''SELECT COUNT(*) as count FROM question;''';
+
+    List<Map<String, dynamic>> maps = await db.rawQuery(sql);
+    return maps.first['count'];
   }
 
   Future<List<QuestionModel>> getQuestionDetail(int questionId) async {
@@ -513,7 +522,7 @@ class DatabaseHelper {
 
     String sql =
         '''INSERT INTO payment (userId, name, phone, address, addressDetail, deliveryMessage, price)
-            VALUES (${payment.userId}, '${payment.name}', ${payment.phone}, '${payment.address}', '${payment.addressDetail}', '${payment.deliveryMessage}', ${payment.price}) RETURNING id''';
+            VALUES (${payment.userId}, '${payment.name}', '${payment.phone}', '${payment.address}', '${payment.addressDetail}', '${payment.deliveryMessage}', ${payment.price}) RETURNING id''';
     List<Map<String, dynamic>> maps = await db.rawQuery(sql);
 
     final paymentId = maps.first['id'];
@@ -536,5 +545,20 @@ class DatabaseHelper {
       where: 'userId = ?',
       whereArgs: [payment.userId],
     );
+  }
+
+  Future<List<Map<String, dynamic>>> getPaymentList(int userId) async {
+    Database db = await _database;
+
+    String sql = '''SELECT p.id, p.price, product.name, product.imageUrl, 
+                    (SELECT COUNT(*) as count FROM 'order' WHERE paymentId = p.id) as count
+                    FROM payment p 
+                    INNER JOIN 'order' o on o.paymentId = p.id
+                    INNER JOIN product on product.id = o.productId
+                    WHERE p.userId = 1
+                    GROUP BY p.id''';
+
+    List<Map<String, dynamic>> maps = await db.rawQuery(sql);
+    return maps;
   }
 }

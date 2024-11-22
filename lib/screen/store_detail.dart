@@ -19,6 +19,18 @@ class StoreDetailScreen extends ConsumerWidget {
 
     final productDetail = ref.watch(productDetailProvider(productId));
 
+    String imageUrl = '';
+    String name = '';
+    int price = 0;
+    String description = '';
+
+    if (productDetail.value != null) {
+      imageUrl = productDetail.value!.imageUrl.toString();
+      name = productDetail.value!.name.toString();
+      price = productDetail.value!.price;
+      description = productDetail.value!.description.toString();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -38,11 +50,11 @@ class StoreDetailScreen extends ConsumerWidget {
           children: [
             Container(
               color: const Color(0xffF2F2F2),
-              child: Image.network(productDetail.value!.imageUrl),
+              child: imageUrl != '' ? Image.network(imageUrl) : null,
             ),
             const SizedBox(height: 30),
             Text(
-              productDetail.value!.name,
+              name,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 25,
@@ -50,7 +62,7 @@ class StoreDetailScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              '${numberFormat.format(productDetail.value!.price)}원',
+              '${numberFormat.format(price)}원',
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w500,
@@ -71,7 +83,7 @@ class StoreDetailScreen extends ConsumerWidget {
                     vertical: 20,
                   ),
                   child: Text(
-                    productDetail.value!.description,
+                    description,
                     style: const TextStyle(
                       fontSize: 17,
                     ),

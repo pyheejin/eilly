@@ -9,8 +9,10 @@ final cartCountProvider = StreamProvider<int>((ref) async* {
   // 1초 간격으로 데이터베이스에서 장바구니 개수를 확인
   while (true) {
     final result = await db.getCartCount(1);
-    yield result;
-    await Future.delayed(const Duration(seconds: 1));
+    if (result > 0) {
+      yield result;
+      await Future.delayed(const Duration(seconds: 1));
+    }
   }
 });
 
@@ -69,8 +71,11 @@ final cartProductProvider =
 
   // 1초 간격으로 데이터베이스에서 장바구니 개수를 확인
   while (true) {
-    final result = await db.getCarts(userId);
-    yield result;
-    await Future.delayed(const Duration(seconds: 1));
+    final count = await db.getCartCount(1);
+    if (count > 0) {
+      final result = await db.getCarts(userId);
+      yield result;
+      await Future.delayed(const Duration(seconds: 1));
+    }
   }
 });

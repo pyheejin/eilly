@@ -1,83 +1,69 @@
-import 'package:eilly/database/database.dart';
-import 'package:eilly/database/models.dart';
-import 'package:eilly/screen/survey_result.dart';
+import 'package:eilly/provider/question_provider.dart';
+import 'package:eilly/screen/main_tab_screen.dart';
 import 'package:eilly/screen/survey_type_select.dart';
 import 'package:eilly/screen/survey_type_text.dart';
 import 'package:eilly/widget/storage.dart';
 import 'package:flutter/material.dart';
-import 'package:percent_indicator/percent_indicator.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:percent_indicator/linear_percent_indicator.dart';
 
-class SurveyTypeOXScreen extends StatefulWidget {
-  final int questionId;
-
+class SurveyTypeOXScreen extends ConsumerWidget {
   const SurveyTypeOXScreen({
     super.key,
     required this.questionId,
   });
 
-  @override
-  State<SurveyTypeOXScreen> createState() => _SurveyTypeOXScreenState();
-}
-
-class _SurveyTypeOXScreenState extends State<SurveyTypeOXScreen> {
-  final DatabaseHelper db = DatabaseHelper();
-
-  late Future<List<QuestionModel>> question;
-
-  int isSelected = 0;
+  final int questionId;
 
   @override
-  void initState() {
-    super.initState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    int nextQuestionPage = questionId + 1;
+    final question = ref.watch(questionDetailProvider(questionId));
+    final questionCount = ref.watch(questionCountProvider);
 
-    db.initDb();
-    question = db.getQuestionDetail(widget.questionId);
-  }
+    int isEnd = 0;
+    int count = 0;
+    int progress = 0;
+    int nextType = 10;
+    String title = '';
+    int isSelected = 0;
 
-  Future<String> _nextQuestionType(int id) async {
-    final q = await db.getQuestionDetail(id);
-    return q.first.type;
-  }
+    if (question.value != null) {
+      title = question.value!.first.title.toString();
+      isEnd = question.value!.first.isEnd;
+    }
 
-  Future<int> _nextQuestionIsEnd(int id) async {
-    final q = await db.getQuestionDetail(id);
-    return q.first.isEnd;
-  }
+    if (questionCount.value != null) {
+      count = questionCount.value!;
+      progress = ((questionId / count) * 100).floor();
+    }
 
-  Future<String> _getStorage(String id) async {
-    final result = await getStorage(id);
-    return result;
-  }
+    void onNextTap() {
+      saveStorage(questionId.toString(), isSelected.toString());
 
-  void _onNextTap() async {
-    final isEnd = await _nextQuestionIsEnd(widget.questionId);
+      if (isEnd == 0) {
+        final nextQuestion =
+            ref.watch(questionDetailProvider(nextQuestionPage));
 
-    saveStorage(widget.questionId.toString(), isSelected.toString());
+        if (nextQuestion.value != null) {
+          nextType = int.parse(nextQuestion.value!.first.type);
+        }
 
-    if (isEnd == 0) {
-      final nextQuestionPage = widget.questionId + 1;
-      final nextType = await _nextQuestionType(nextQuestionPage);
-
-      if (int.parse(nextType) == 20) {
-        if (mounted) {
+        if (nextType == 20) {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) =>
                   SurveyTypeSelectScreen(questionId: nextQuestionPage),
             ),
           );
-        }
-      } else if (int.parse(nextType) == 10) {
-        if (mounted) {
+        } else if (nextType == 10) {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) =>
                   SurveyTypeTextScreen(questionId: nextQuestionPage),
             ),
           );
-        }
-      } else if (int.parse(nextType) == 30) {
-        if (mounted) {
+        } else if (nextType == 30) {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) =>
@@ -85,51 +71,22 @@ class _SurveyTypeOXScreenState extends State<SurveyTypeOXScreen> {
             ),
           );
         }
-      }
-    } else {
-      final questionList = await db.getQuestions();
-      final List<Map<String, dynamic>> results = [];
-      for (var q in questionList) {
-        // 10(text), 20(select), 30(o/x)
-        results.add({
-          'questionId': q.id.toString(),
-          'questionType': q.type,
-          'answerId':
-              q.type == '20' ? await _getStorage(q.id.toString()) : null,
-          'description':
-              q.type != '20' ? await _getStorage(q.id.toString()) : '',
-        });
-      }
-      final surveyId = await _getStorage('surveyId');
-      final productId =
-          await db.insertSurveyResult(int.parse(surveyId), results);
-
-      removeStorage('survey');
-      removeStorage('surveyId');
-
-      if (mounted) {
+      } else {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => SurveyResultScreen(productId: productId),
+            builder: (context) => const MainTabScreen(),
           ),
         );
       }
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(50),
-        child: AppBar(
-          automaticallyImplyLeading: false,
-          title: const Text(
-            'eilly',
-            style: TextStyle(
-              color: Color(0xffff5c35),
-              fontSize: 27,
-            ),
+      appBar: AppBar(
+        title: const Text(
+          'eilly',
+          style: TextStyle(
+            color: Color(0xffff5c35),
+            fontSize: 27,
           ),
         ),
       ),
@@ -155,11 +112,11 @@ class _SurveyTypeOXScreenState extends State<SurveyTypeOXScreen> {
                 LinearPercentIndicator(
                   width: 360,
                   lineHeight: 5,
-                  percent: 0.2,
+                  percent: progress.toDouble() / 100,
                   progressColor: const Color(0xffff5c35),
-                  trailing: const Text(
-                    '14%',
-                    style: TextStyle(
+                  trailing: Text(
+                    '$progress%',
+                    style: const TextStyle(
                       fontSize: 17,
                       color: Color(0xffff5c35),
                     ),
@@ -168,32 +125,19 @@ class _SurveyTypeOXScreenState extends State<SurveyTypeOXScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            FutureBuilder(
-              future: question,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                } else if (snapshot.hasError) {
-                  return Text('Error: ${snapshot.error}');
-                } else {
-                  List<QuestionModel> questionList =
-                      snapshot.data as List<QuestionModel>;
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Q. ${questionList[0].title}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Text(
+                    'Q. $title',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 20,
                     ),
-                  );
-                }
-              },
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 120),
             Row(
@@ -201,13 +145,14 @@ class _SurveyTypeOXScreenState extends State<SurveyTypeOXScreen> {
               children: [
                 GestureDetector(
                   onTap: () {
-                    setState(() {
-                      isSelected = 1;
-                    });
+                    isSelected = 1;
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.withOpacity(1)),
+                      border: Border.all(
+                          color: isSelected == 1
+                              ? const Color(0xffff5c35)
+                              : Colors.grey.withOpacity(1)),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Padding(
@@ -237,13 +182,14 @@ class _SurveyTypeOXScreenState extends State<SurveyTypeOXScreen> {
                 const SizedBox(width: 30),
                 GestureDetector(
                   onTap: () {
-                    setState(() {
-                      isSelected = -1;
-                    });
+                    isSelected = -1;
                   },
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.withOpacity(1)),
+                      border: Border.all(
+                          color: isSelected == -1
+                              ? const Color(0xffff5c35)
+                              : Colors.grey.withOpacity(1)),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Padding(
@@ -304,7 +250,7 @@ class _SurveyTypeOXScreenState extends State<SurveyTypeOXScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: IconButton(
-                  onPressed: _onNextTap,
+                  onPressed: onNextTap,
                   icon: const Icon(
                     Icons.chevron_right,
                     size: 30,

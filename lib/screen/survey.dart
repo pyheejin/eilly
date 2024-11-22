@@ -1,96 +1,62 @@
-import 'package:eilly/database/database.dart';
-import 'package:eilly/database/models.dart';
+import 'package:eilly/provider/question_provider.dart';
 import 'package:eilly/screen/main_tab_screen.dart';
 import 'package:eilly/screen/survey_type_ox.dart';
 import 'package:eilly/screen/survey_type_select.dart';
 import 'package:eilly/screen/survey_type_text.dart';
 import 'package:eilly/widget/storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SurveyScreen extends StatefulWidget {
-  final int questionId;
-
+class SurveyScreen extends ConsumerWidget {
   const SurveyScreen({
     super.key,
     required this.questionId,
   });
 
-  @override
-  State<SurveyScreen> createState() => _SurveyScreenState();
-}
-
-class _SurveyScreenState extends State<SurveyScreen> {
-  final DatabaseHelper db = DatabaseHelper();
-
-  late Future<List<QuestionModel>> question;
-
-  int type = 10;
-
-  final TextEditingController _textController = TextEditingController();
-
-  late String _text;
+  final int questionId;
 
   @override
-  void initState() {
-    super.initState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final TextEditingController textController = TextEditingController();
 
-    db.initDb();
-    question = db.getQuestionDetail(widget.questionId);
+    late String text;
+    int nextQuestionPage = questionId + 1;
+    final question = ref.watch(questionDetailProvider(questionId));
+    final nextQuestion = ref.watch(questionDetailProvider(nextQuestionPage));
 
-    _textController.addListener(() {
-      setState(() {
-        if (_textController.text.isEmpty) {
-          _text = _textController.text;
-        }
-      });
-    });
-  }
+    int isEnd = 0;
+    int nextType = 10;
+    String title = '';
 
-  @override
-  void dispose() {
-    _textController.dispose();
-    super.dispose();
-  }
+    if (question.value != null) {
+      title = question.value!.first.title.toString();
+      isEnd = question.value!.first.isEnd;
+    }
 
-  Future<String> _nextQuestionType(int id) async {
-    final q = await db.getQuestionDetail(id);
-    return q.first.type;
-  }
+    if (nextQuestion.value != null) {
+      nextType = int.parse(nextQuestion.value!.first.type);
+    }
 
-  Future<int> _nextQuestionIsEnd(int id) async {
-    final q = await db.getQuestionDetail(id);
-    return q.first.isEnd;
-  }
+    void onNextTap() {
+      saveStorage(questionId.toString(), textController.text);
+      textController.clear();
 
-  void _onNextTap() async {
-    final isEnd = await _nextQuestionIsEnd(widget.questionId);
-
-    saveStorage(widget.questionId.toString(), _textController.text);
-
-    if (isEnd == 0) {
-      final nextQuestionPage = widget.questionId + 1;
-      final nextType = await _nextQuestionType(nextQuestionPage);
-
-      if (int.parse(nextType) == 20) {
-        if (mounted) {
+      if (isEnd == 0) {
+        if (nextType == 20) {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) =>
                   SurveyTypeSelectScreen(questionId: nextQuestionPage),
             ),
           );
-        }
-      } else if (int.parse(nextType) == 10) {
-        if (mounted) {
+        } else if (nextType == 10) {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) =>
                   SurveyTypeTextScreen(questionId: nextQuestionPage),
             ),
           );
-        }
-      } else if (int.parse(nextType) == 30) {
-        if (mounted) {
+        } else if (nextType == 30) {
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) =>
@@ -98,9 +64,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
             ),
           );
         }
-      }
-    } else {
-      if (mounted) {
+      } else {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => const MainTabScreen(),
@@ -108,20 +72,14 @@ class _SurveyScreenState extends State<SurveyScreen> {
         );
       }
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(50),
-        child: AppBar(
-          title: const Text(
-            'eilly',
-            style: TextStyle(
-              color: Color(0xffff5c35),
-              fontSize: 27,
-            ),
+      appBar: AppBar(
+        title: const Text(
+          'eilly',
+          style: TextStyle(
+            color: Color(0xffff5c35),
+            fontSize: 27,
           ),
         ),
       ),
@@ -137,49 +95,34 @@ class _SurveyScreenState extends State<SurveyScreen> {
                 vertical: 60,
                 horizontal: 10,
               ),
-              child: FutureBuilder(
-                future: question,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
-                  } else if (snapshot.hasError) {
-                    return Text('Error: ${snapshot.error}');
-                  } else {
-                    List<QuestionModel> questionList =
-                        snapshot.data as List<QuestionModel>;
-                    return Column(
-                      children: [
-                        Center(
-                          child: Text(
-                            questionList[0].title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
+              child: Column(
+                children: [
+                  Center(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  TextField(
+                    controller: textController,
+                    onChanged: (value) {
+                      text = value;
+                    },
+                    decoration: InputDecoration(
+                      hintText: title,
+                      enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Color.fromARGB(255, 161, 147, 147),
+                          width: 1.0,
                         ),
-                        const SizedBox(height: 30),
-                        TextField(
-                          controller: _textController,
-                          onChanged: (value) {
-                            setState(() {
-                              _text = value;
-                            });
-                          },
-                          decoration: InputDecoration(
-                            hintText: questionList[0].title,
-                            enabledBorder: const OutlineInputBorder(
-                              borderSide: BorderSide(
-                                color: Color.fromARGB(255, 161, 147, 147),
-                                width: 1.0,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-                },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -214,7 +157,7 @@ class _SurveyScreenState extends State<SurveyScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: IconButton(
-                  onPressed: _onNextTap,
+                  onPressed: onNextTap,
                   icon: const Icon(
                     Icons.chevron_right,
                     size: 30,
