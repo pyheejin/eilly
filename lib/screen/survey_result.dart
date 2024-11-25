@@ -1,5 +1,6 @@
 import 'package:eilly/provider/category_provider.dart';
 import 'package:eilly/provider/product_provider.dart';
+import 'package:eilly/screen/main_tab_screen.dart';
 import 'package:eilly/screen/store_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,8 +16,20 @@ class SurveyResultScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productDetail = ref.watch(productDetailProvider(productId));
-    final categoryDetail =
-        ref.watch(categoryDetailProvider(productDetail.value!.categoryId));
+    String categoryName = '';
+    String imageUrl = '';
+    String name = '';
+
+    if (productDetail.value != null) {
+      imageUrl = productDetail.value!.imageUrl;
+      name = productDetail.value!.name;
+
+      final categoryDetail =
+          ref.watch(categoryDetailProvider(productDetail.value!.categoryId));
+      if (categoryDetail.value != null) {
+        categoryName = categoryDetail.value!.name;
+      }
+    }
 
     void onTap() {
       Navigator.of(context).push(
@@ -61,7 +74,7 @@ class SurveyResultScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '${categoryDetail.value!.name}에 관련된 영양제를 추천해드릴게요!',
+                  '$categoryName에 관련된 영양제를 추천해드릴게요!',
                   style: const TextStyle(
                     fontSize: 16,
                     color: Color(0xffff5c35),
@@ -72,12 +85,12 @@ class SurveyResultScreen extends ConsumerWidget {
             const SizedBox(height: 10),
             Container(
               color: const Color(0xffF2F2F2),
-              child: Image.network(productDetail.value!.imageUrl),
+              child: Image.network(imageUrl),
             ),
             const SizedBox(height: 30),
             Center(
               child: Text(
-                productDetail.value!.name,
+                name,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 25,
@@ -89,13 +102,36 @@ class SurveyResultScreen extends ConsumerWidget {
         ),
       ),
       bottomNavigationBar: BottomAppBar(
-        child: TextButton(
-          onPressed: onTap,
-          child: const Text(
-            '자세히 보러가기',
-            style: TextStyle(
-              fontSize: 20,
-            ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: onTap,
+                child: const Text(
+                  '자세히 보러가기',
+                  style: TextStyle(
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const MainTabScreen(),
+                    ),
+                  );
+                },
+                child: const Text(
+                  '홈 화면으로 이동',
+                  style: TextStyle(
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

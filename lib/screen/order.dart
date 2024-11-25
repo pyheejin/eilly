@@ -1,8 +1,6 @@
 import 'package:eilly/database/models.dart';
 import 'package:eilly/provider/order_provider.dart';
 import 'package:eilly/screen/main_tab_screen.dart';
-import 'package:eilly/screen/profile.dart';
-import 'package:eilly/screen/store.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -30,7 +28,6 @@ class OrderScreen extends ConsumerWidget {
     final deliveryMessageController = TextEditingController();
 
     void onTap() {
-      print('주문완료');
       final List<OrderModel> orders = [];
 
       final payment = PaymentModel(

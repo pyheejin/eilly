@@ -19,13 +19,11 @@ class SurveyScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final TextEditingController textController = TextEditingController();
 
-    late String text;
+    late int nextType;
     int nextQuestionPage = questionId + 1;
     final question = ref.watch(questionDetailProvider(questionId));
-    final nextQuestion = ref.watch(questionDetailProvider(nextQuestionPage));
 
     int isEnd = 0;
-    int nextType = 10;
     String title = '';
 
     if (question.value != null) {
@@ -33,6 +31,7 @@ class SurveyScreen extends ConsumerWidget {
       isEnd = question.value!.first.isEnd;
     }
 
+    final nextQuestion = ref.watch(questionDetailProvider(nextQuestionPage));
     if (nextQuestion.value != null) {
       nextType = int.parse(nextQuestion.value!.first.type);
     }
@@ -109,9 +108,7 @@ class SurveyScreen extends ConsumerWidget {
                   const SizedBox(height: 30),
                   TextField(
                     controller: textController,
-                    onChanged: (value) {
-                      text = value;
-                    },
+                    onChanged: (value) {},
                     decoration: InputDecoration(
                       hintText: title,
                       enabledBorder: const OutlineInputBorder(

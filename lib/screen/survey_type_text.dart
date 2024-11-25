@@ -1,6 +1,5 @@
 import 'package:eilly/provider/question_provider.dart';
 import 'package:eilly/provider/survey_provider.dart';
-import 'package:eilly/screen/main_tab_screen.dart';
 import 'package:eilly/screen/survey_result.dart';
 import 'package:eilly/screen/survey_type_ox.dart';
 import 'package:eilly/screen/survey_type_select.dart';
@@ -21,7 +20,7 @@ class SurveyTypeTextScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final TextEditingController textController = TextEditingController();
 
-    late String text;
+    late int nextType;
     int nextQuestionPage = questionId + 1;
     final questions = ref.watch(questionListProvider);
     final question = ref.watch(questionDetailProvider(questionId));
@@ -30,7 +29,6 @@ class SurveyTypeTextScreen extends ConsumerWidget {
     int isEnd = 0;
     int count = 0;
     int progress = 0;
-    int nextType = 10;
     String title = '';
 
     if (question.value != null) {
@@ -48,18 +46,21 @@ class SurveyTypeTextScreen extends ConsumerWidget {
       return result;
     }
 
+    if (questions.value != null) {
+      if (questions.value!.length >= nextQuestionPage) {
+        final nextQuestion =
+            ref.watch(questionDetailProvider(nextQuestionPage));
+        if (nextQuestion.value != null) {
+          nextType = int.parse(nextQuestion.value!.first.type);
+        }
+      }
+    }
+
     void onNextTap() async {
       saveStorage(questionId.toString(), textController.text);
       textController.clear();
 
       if (isEnd == 0) {
-        final nextQuestion =
-            ref.watch(questionDetailProvider(nextQuestionPage));
-
-        if (nextQuestion.value != null) {
-          nextType = int.parse(nextQuestion.value!.first.type);
-        }
-
         if (nextType == 20) {
           Navigator.of(context).push(
             MaterialPageRoute(
@@ -181,9 +182,7 @@ class SurveyTypeTextScreen extends ConsumerWidget {
                   const SizedBox(height: 30),
                   TextField(
                     controller: textController,
-                    onChanged: (value) {
-                      text = value;
-                    },
+                    onChanged: (value) {},
                     decoration: InputDecoration(
                       hintText: title,
                       enabledBorder: const OutlineInputBorder(

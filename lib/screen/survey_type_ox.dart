@@ -18,15 +18,16 @@ class SurveyTypeOXScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     int nextQuestionPage = questionId + 1;
+    final questions = ref.watch(questionListProvider);
     final question = ref.watch(questionDetailProvider(questionId));
     final questionCount = ref.watch(questionCountProvider);
 
     int isEnd = 0;
     int count = 0;
     int progress = 0;
-    int nextType = 10;
     String title = '';
     int isSelected = 0;
+    late int nextType;
 
     if (question.value != null) {
       title = question.value!.first.title.toString();
@@ -38,17 +39,20 @@ class SurveyTypeOXScreen extends ConsumerWidget {
       progress = ((questionId / count) * 100).floor();
     }
 
+    if (questions.value != null) {
+      if (questions.value!.length >= nextQuestionPage) {
+        final nextQuestion =
+            ref.watch(questionDetailProvider(nextQuestionPage));
+        if (nextQuestion.value != null) {
+          nextType = int.parse(nextQuestion.value!.first.type);
+        }
+      }
+    }
+
     void onNextTap() {
       saveStorage(questionId.toString(), isSelected.toString());
 
       if (isEnd == 0) {
-        final nextQuestion =
-            ref.watch(questionDetailProvider(nextQuestionPage));
-
-        if (nextQuestion.value != null) {
-          nextType = int.parse(nextQuestion.value!.first.type);
-        }
-
         if (nextType == 20) {
           Navigator.of(context).push(
             MaterialPageRoute(
